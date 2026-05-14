@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Maintenance Requests | IT Asset Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
+        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .navbar .brand { font-size: 1.2rem; font-weight: 700; text-decoration: none; color: white; }
+        .navbar nav a { color: rgba(255,255,255,0.85); text-decoration: none; margin-left: 20px; font-size: 0.9rem; padding: 6px 12px; border-radius: 4px; }
+        .navbar nav a:hover { background: rgba(255,255,255,0.15); color: white; }
+        .page-wrapper { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .page-header h1 { font-size: 1.6rem; color: #1a237e; font-weight: 700; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 28px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        thead th { background: #b71c1c; color: white; padding: 12px 14px; text-align: left; font-weight: 600; }
+        tbody tr { border-bottom: 1px solid #e8eaf0; transition: background 0.15s; }
+        tbody tr:hover { background: #fff8f8; }
+        tbody td { padding: 11px 14px; vertical-align: middle; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+        .badge-pending    { background: #fff8e1; color: #f57f17; }
+        .badge-inprogress { background: #e3f2fd; color: #1565c0; }
+        .badge-resolved   { background: #e8f5e9; color: #2e7d32; }
+        .btn { display: inline-block; padding: 8px 16px; border-radius: 5px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary  { background: #1a237e; color: white; }
+        .btn-success  { background: #2e7d32; color: white; }
+        .btn-info     { background: #0277bd; color: white; }
+        .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+        select.status-select { padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.8rem; }
+        .empty-state { text-align: center; padding: 48px 20px; color: #90a4ae; }
+        .footer { text-align: center; color: #90a4ae; font-size: 0.8rem; padding: 24px 0 40px; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <a class="brand" href="/assets">🖥️ IT Asset Management</a>
+    <nav>
+        <a href="/assets">Assets</a>
+        <a href="/assets/add">Add Asset</a>
+        <a href="/maintenance">Maintenance</a>
+        <a href="/logs">Audit Log</a>
+        <a href="/assets/warranty">Warranty</a>
+    </nav>
+</div>
+
+<div class="page-wrapper">
+    <div class="page-header">
+        <h1>🔧 Maintenance Requests</h1>
+        <a href="/assets" class="btn btn-primary">← Back to Assets</a>
+    </div>
+
+    <div class="card">
+        <div th:if="${#lists.isEmpty(requests)}" class="empty-state">
+            <p>No maintenance requests found. Go to an asset and click <strong>Maintenance</strong> to raise one.</p>
+        </div>
+
+        <table th:if="${!#lists.isEmpty(requests)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Asset</th>
+                    <th>Raised By</th>
+                    <th>Issue Description</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Update Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="req : ${requests}">
+                    <td th:text="${req.id}">1</td>
+                    <td th:text="${req.asset.assetName}">Laptop</td>
+                    <td th:text="${req.raisedBy}">John</td>
+                    <td th:text="${req.issueDescription}">Screen flickering</td>
+                    <td th:text="${req.requestDate}">2024-01-01</td>
+                    <td>
+                        <span th:if="${req.requestStatus == 'Pending'}"     class="badge badge-pending">Pending</span>
+                        <span th:if="${req.requestStatus == 'In Progress'}" class="badge badge-inprogress">In Progress</span>
+                        <span th:if="${req.requestStatus == 'Resolved'}"    class="badge badge-resolved">Resolved</span>
+                    </td>
+                    <td>
+                        <!-- Only show update option if not already resolved -->
+                        <form th:if="${req.requestStatus != 'Resolved'}"
+                              th:action="@{/maintenance/update-status/{id}(id=${req.id})}"
+                              method="post"
+                              style="display:flex; gap:6px; align-items:center;">
+                            <select name="newStatus" class="status-select">
+                                <option value="Pending"     th:selected="${req.requestStatus == 'Pending'}">Pending</option>
+                                <option value="In Progress" th:selected="${req.requestStatus == 'In Progress'}">In Progress</option>
+                                <option value="Resolved"    th:selected="${req.requestStatus == 'Resolved'}">Resolved</option>
+                            </select>
+                            <button type="submit" class="btn btn-success btn-sm">Update</button>
+                        </form>
+                        <span th:if="${req.requestStatus == 'Resolved'}" style="color:#2e7d32;font-size:0.85rem;">✔ Done</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="footer">IT Asset Lifecycle Management System &mdash; Final Year Project</div>
+
+</body>
+</html>

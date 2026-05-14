@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${pageTitle} + ' | IT Asset Management'">Assets</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
+        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .navbar .brand { font-size: 1.2rem; font-weight: 700; text-decoration: none; color: white; }
+        .navbar nav a { color: rgba(255,255,255,0.85); text-decoration: none; margin-left: 20px; font-size: 0.9rem; padding: 6px 12px; border-radius: 4px; transition: background 0.2s; }
+        .navbar nav a:hover { background: rgba(255,255,255,0.15); color: white; }
+        .page-wrapper { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .page-header h1 { font-size: 1.6rem; color: #1a237e; font-weight: 700; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 28px; margin-bottom: 24px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        thead th { background: #1a237e; color: white; padding: 12px 14px; text-align: left; font-weight: 600; }
+        tbody tr { border-bottom: 1px solid #e8eaf0; transition: background 0.15s; }
+        tbody tr:hover { background: #f5f6ff; }
+        tbody td { padding: 11px 14px; vertical-align: middle; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+        .badge-available   { background: #e8f5e9; color: #2e7d32; }
+        .badge-assigned    { background: #e3f2fd; color: #1565c0; }
+        .badge-maintenance { background: #fff3e0; color: #e65100; }
+        .badge-retired     { background: #fce4ec; color: #b71c1c; }
+        .btn { display: inline-block; padding: 8px 16px; border-radius: 5px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-success { background: #2e7d32; color: white; }
+        .btn-warning { background: #f57c00; color: white; }
+        .btn-danger  { background: #c62828; color: white; }
+        .btn-info    { background: #0277bd; color: white; }
+        .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+        .empty-state { text-align: center; padding: 48px 20px; color: #90a4ae; }
+        .footer { text-align: center; color: #90a4ae; font-size: 0.8rem; padding: 24px 0 40px; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <a class="brand" href="/assets">🖥️ IT Asset Management</a>
+    <nav>
+        <a href="/assets">Assets</a>
+        <a href="/assets/add">Add Asset</a>
+        <a href="/maintenance">Maintenance</a>
+        <a href="/logs">Audit Log</a>
+        <a href="/assets/warranty">Warranty</a>
+    </nav>
+</div>
+
+<div class="page-wrapper">
+    <div class="page-header">
+        <h1>📋 All Assets</h1>
+        <a href="/assets/add" class="btn btn-primary">+ Add New Asset</a>
+    </div>
+
+    <div class="card">
+        <div th:if="${#lists.isEmpty(assets)}" class="empty-state">
+            <p>No assets found. <a href="/assets/add">Add your first asset</a>.</p>
+        </div>
+
+        <table th:if="${!#lists.isEmpty(assets)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Asset Name</th>
+                    <th>Type</th>
+                    <th>Serial Number</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th>Warranty Expiry</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="asset : ${assets}">
+                    <td th:text="${asset.id}">1</td>
+                    <td th:text="${asset.assetName}">Laptop</td>
+                    <td th:text="${asset.assetType}">Laptop</td>
+                    <td th:text="${asset.serialNumber}">SN001</td>
+                    <td>
+                        <span th:if="${asset.status == 'Available'}"    class="badge badge-available"   th:text="${asset.status}"></span>
+                        <span th:if="${asset.status == 'Assigned'}"     class="badge badge-assigned"    th:text="${asset.status}"></span>
+                        <span th:if="${asset.status == 'Under Maintenance'}" class="badge badge-maintenance" th:text="${asset.status}"></span>
+                        <span th:if="${asset.status == 'Retired'}"      class="badge badge-retired"     th:text="${asset.status}"></span>
+                    </td>
+                    <td th:text="${asset.assignedTo != null ? asset.assignedTo : '—'}">—</td>
+                    <td>
+                        <span th:if="${asset.warrantyExpiryDate == null}">—</span>
+                        <span th:if="${asset.warrantyExpiryDate != null and asset.warrantyExpired}"
+                              style="color:#b71c1c;font-weight:600;"
+                              th:text="${asset.warrantyExpiryDate} + ' (Expired)'"></span>
+                        <span th:if="${asset.warrantyExpiryDate != null and !asset.warrantyExpired}"
+                              th:text="${asset.warrantyExpiryDate}"></span>
+                    </td>
+                    <td>
+                        <a th:href="@{/assets/assign/{id}(id=${asset.id})}"
+                           th:if="${asset.status == 'Available'}"
+                           class="btn btn-success btn-sm">Assign</a>
+
+                        <a th:href="@{/assets/unassign/{id}(id=${asset.id})}"
+                           th:if="${asset.status == 'Assigned'}"
+                           class="btn btn-warning btn-sm">Unassign</a>
+
+                        <a th:href="@{/maintenance/raise/{id}(id=${asset.id})}"
+                           class="btn btn-danger btn-sm">Maintenance</a>
+
+                        <a th:href="@{/logs/asset/{id}(id=${asset.id})}"
+                           class="btn btn-info btn-sm">Logs</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="footer">IT Asset Lifecycle Management System &mdash; Final Year Project</div>
+
+</body>
+</html>
